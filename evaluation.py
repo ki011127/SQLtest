@@ -538,7 +538,7 @@ def evaluate(gold, predict, db_dir, etype, kmaps, plug_value, keep_distinct, pro
             plist.append(pseq_one)
 
     assert len(plist) == len(glist), "number of sessions must equal"
-
+    
     evaluator = Evaluator()
     turns = ['turn 1', 'turn 2', 'turn 3', 'turn 4', 'turn > 4']
     levels = ['easy', 'medium', 'hard', 'extra', 'all', 'joint_all']
@@ -557,7 +557,7 @@ def evaluate(gold, predict, db_dir, etype, kmaps, plug_value, keep_distinct, pro
         scores[level]['exec'] = 0
         for type_ in partial_types:
             scores[level]['partial'][type_] = {'acc': 0., 'rec': 0., 'f1': 0.,'acc_count':0,'rec_count':0}
-
+    wrong_list = []
     for i, (p, g) in enumerate(zip(plist, glist)):
         if (i + 1) % 10 == 0:
             print('Evaluating %dth prediction' % (i + 1))
@@ -614,6 +614,7 @@ def evaluate(gold, predict, db_dir, etype, kmaps, plug_value, keep_distinct, pro
                     scores['all']['exec'] += 1
                     turn_scores['exec'].append(1)
                 else:
+                    wrong_list.append({"p_sql":p_str, "g_sql":g_str})
                     turn_scores['exec'].append(0)
 
             if etype in ["all", "match"]:
@@ -666,6 +667,11 @@ def evaluate(gold, predict, db_dir, etype, kmaps, plug_value, keep_distinct, pro
 
         if all(v == 1 for v in turn_scores["exact"]):
             scores['joint_all']['exact'] += 1
+    
+    with open("wrong_sql.json", "w", encoding="utf-8") as file:
+        json.dump(wrong_list, file, ensure_ascii=False, indent=4)
+
+
 
     for turn in turns:
         if scores[turn]['count'] == 0:
